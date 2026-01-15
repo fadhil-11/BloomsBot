@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Paper - BLOOMS BOT{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>⚙️ Generate Question Paper</h2>
+    <p>Configure constraints and generate your balanced question paper</p>
+    <div class="stats-badge">
+        <strong>{{ total_questions }}</strong> questions available across <strong>{{ units|length }}</strong> units
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('create_paper') }}" id="generateForm">
+    <div class="form-row">
+        <div class="card">
+            <h3>📊 Basic Configuration</h3>
+            
+            <div class="form-group">
+                <label for="total_marks">Total Marks</label>
+                <input type="number" name="total_marks" id="total_marks" value="100" min="10" max="200" class="form-control" required>
+                <small class="form-text">Target total marks for the paper</small>
+            </div>
+
+            <div class="form-group">
+                <label for="num_questions">Number of Questions</label>
+                <input type="number" name="num_questions" id="num_questions" value="10" min="3" max="30" class="form-control" required>
+                <small class="form-text">Target number of questions</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📚 Unit-wise Mark Distribution</h3>
+            <p class="card-description">Allocate marks for each unit (leave 0 to skip)</p>
+            
+            {% for unit in units %}
+            <div class="form-group">
+                <label for="unit_{{ unit }}">{{ unit }}</label>
+                <input type="number" name="unit_{{ unit }}" id="unit_{{ unit }}" value="0" min="0" max="100" class="form-control unit-marks">
+            </div>
+            {% endfor %}
+            
+            <div class="marks-total">
+                <strong>Total Allocated:</strong> <span id="unitTotal">0</span> marks
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎯 Bloom's Taxonomy Distribution</h3>
+        <p class="card-description">Set percentage allocation for each cognitive level (must sum to 100%)</p>
+        
+        <div class="bloom-sliders">
+            <div class="slider-group">
+                <label for="bloom_remember">
+                    <span class="bloom-label remember">Remember</span>
+                    <span class="bloom-value" id="val_remember">15%</span>
+                </label>
+                <input type="range" name="bloom_remember" id="bloom_remember" value="15" min="0" max="100" class="bloom-slider">
+            </div>
+
+            <div class="slider-group">
+                <label for="bloom_understand">
+                    <span class="bloom-label understand">Understand</span>
+                    <span class="bloom-value" id="val_understand">25%</span>
+                </label>
+                <input type="range" name="bloom_understand" id="bloom_understand" value="25" min="0" max="100" class="bloom-slider">
+            </div>
+
+            <div class="slider-group">
+                <label for="bloom_apply">
+                    <span class="bloom-label apply">Apply</span>
+                    <span class="bloom-value" id="val_apply">25%</span>
+                </label>
+                <input type="range" name="bloom_apply" id="bloom_apply" value="25" min="0" max="100" class="bloom-slider">
+            </div>
+
+            <div class="slider-group">
+                <label for="bloom_analyze">
+                    <span class="bloom-label analyze">Analyze</span>
+                    <span class="bloom-value" id="val_analyze">20%</span>
+                </label>
+                <input type="range" name="bloom_analyze" id="bloom_analyze" value="20" min="0" max="100" class="bloom-slider">
+            </div>
+
+            <div class="slider-group">
+                <label for="bloom_evaluate">
+                    <span class="bloom-label evaluate">Evaluate</span>
+                    <span class="bloom-value" id="val_evaluate">10%</span>
+                </label>
+                <input type="range" name="bloom_evaluate" id="bloom_evaluate" value="10" min="0" max="100" class="bloom-slider">
+            </div>
+
+            <div class="slider-group">
+                <label for="bloom_create">
+                    <span class="bloom-label create">Create</span>
+                    <span class="bloom-value" id="val_create">5%</span>
+                </label>
+                <input type="range" name="bloom_create" id="bloom_create" value="5" min="0" max="100" class="bloom-slider">
+            </div>
+        </div>
+
+        <div class="bloom-total">
+            <strong>Total:</strong> <span id="bloomTotal">100%</span>
+            <span id="bloomWarning" class="warning-text" style="display: none;">⚠️ Must equal 100%</span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-large" id="generateBtn">
+        <span>🎲 Generate Question Paper</span>
+    </button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update unit marks total
+const unitInputs = document.querySelectorAll('.unit-marks');
+unitInputs.forEach(input => {
+    input.addEventListener('input', updateUnitTotal);
+});
+
+function updateUnitTotal() {
+    let total = 0;
+    unitInputs.forEach(input => {
+        total += parseInt(input.value) || 0;
+    });
+    document.getElementById('unitTotal').textContent = total;
+}
+
+// Update Bloom's slider values and validate total
+const sliders = document.querySelectorAll('.bloom-slider');
+sliders.forEach(slider => {
+    slider.addEventListener('input', function() {
+        const id = this.id.replace('bloom_', '');
+        document.getElementById('val_' + id).textContent = this.value + '%';
+        validateBloomTotal();
+    });
+});
+
+function validateBloomTotal() {
+    let total = 0;
+    sliders.forEach(slider => {
+        total += parseInt(slider.value) || 0;
+    });
+    
+    document.getElementById('bloomTotal').textContent = total + '%';
+    
+    const warning = document.getElementById('bloomWarning');
+    const btn = document.getElementById('generateBtn');
+    
+    if (total !== 100) {
+        warning.style.display = 'inline';
+        btn.disabled = true;
+    } else {
+        warning.style.display = 'none';
+        btn.disabled = false;
+    }
+}
+
+// Initialize
+updateUnitTotal();
+validateBloomTotal();
+
+// Show loading on submit
+document.getElementById('generateForm').addEventListener('submit', function() {
+    const btn = document.getElementById('generateBtn');
+    btn.innerHTML = '<span>⏳ Generating paper... Please wait</span>';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

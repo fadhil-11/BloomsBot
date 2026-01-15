@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Review Paper - BLOOMS BOT{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📝 Review & Edit Question Paper</h2>
+    <p>Review your generated paper and make adjustments as needed</p>
+</div>
+
+<div class="paper-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ questions|length }}</div>
+        <div class="stat-label">Questions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_marks }}</div>
+        <div class="stat-label">Total Marks</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ bloom_stats|length }}</div>
+        <div class="stat-label">Bloom Levels</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ difficulty_stats|length }}</div>
+        <div class="stat-label">Difficulties</div>
+    </div>
+</div>
+
+<div class="distribution-charts">
+    <div class="card chart-card">
+        <h3>Bloom's Taxonomy Distribution</h3>
+        <div class="chart-bars">
+            {% for level, count in bloom_stats.items() %}
+            <div class="chart-bar-row">
+                <span class="chart-label">{{ level }}</span>
+                <div class="chart-bar-container">
+                    <div class="chart-bar" style="width: {{ (count / questions|length * 100)|int }}%">
+                        {{ count }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card chart-card">
+        <h3>Difficulty Distribution</h3>
+        <div class="chart-bars">
+            {% for diff, count in difficulty_stats.items() %}
+            <div class="chart-bar-row">
+                <span class="chart-label">{{ diff }}</span>
+                <div class="chart-bar-container">
+                    <div class="chart-bar difficulty-{{ diff|lower }}" style="width: {{ (count / questions|length * 100)|int }}%">
+                        {{ count }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card questions-list">
+    <h3>📋 Question Paper</h3>
+    
+    {% for q in questions %}
+    <div class="question-item" id="question-{{ q.id }}">
+        <div class="question-header">
+            <div class="question-number">Q{{ loop.index }}</div>
+            <div class="question-badges">
+                <span class="badge badge-unit">{{ q.unit }}</span>
+                <span class="badge badge-marks">{{ q.marks }} marks</span>
+                <span class="badge badge-bloom">{{ q.bloom_level }}</span>
+                <span class="badge badge-difficulty badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span>
+            </div>
+        </div>
+        
+        <div class="question-text">
+            {{ q.question }}
+        </div>
+        
+        <div class="question-actions">
+            <button class="btn btn-small btn-secondary" onclick="replaceQuestion({{ q.id }})">
+                🔄 Replace
+            </button>
+            <button class="btn btn-small btn-danger" onclick="removeQuestion({{ q.id }})">
+                🗑️ Remove
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="export-section">
+    <h3>💾 Export Question Paper</h3>
+    <div class="export-buttons">
+        <a href="{{ url_for('export', format='pdf') }}" class="btn btn-primary btn-large">
+            📄 Download as PDF
+        </a>
+        <a href="{{ url_for('export', format='txt') }}" class="btn btn-secondary btn-large">
+            📝 Download as Text
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function replaceQuestion(questionId) {
+    if (!confirm('Replace this question with another similar one?')) return;
+    
+    fetch(`/replace_question/${questionId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Question replaced! Reloading page...');
+            location.reload();
+        } else {
+            alert(data.error || 'Could not replace question');
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function removeQuestion(questionId) {
+    if (!confirm('Remove this question from the paper?')) return;
+    
+    fetch(`/remove_question/${questionId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById(`question-${questionId}`).remove();
+            alert('Question removed!');
+            location.reload();
+        } else {
+            alert('Error removing question');
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+</script>
+{% endblock %}

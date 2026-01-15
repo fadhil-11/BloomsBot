@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - BLOOMS BOT{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📄 Upload Academic Document</h2>
+    <p>Upload your syllabus or lecture notes (PDF format) to generate questions</p>
+</div>
+
+<div class="card upload-card">
+    <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" id="uploadForm">
+        <div class="form-group">
+            <label for="document_type">Document Type</label>
+            <select name="document_type" id="document_type" class="form-control" required>
+                <option value="syllabus">Syllabus</option>
+                <option value="lecture_notes">Lecture Notes</option>
+            </select>
+            <small class="form-text">Select the type of document you're uploading</small>
+        </div>
+
+        <div class="form-group">
+            <label for="pdf_file">Select PDF File</label>
+            <div class="file-input-wrapper">
+                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required class="file-input">
+                <label for="pdf_file" class="file-label">
+                    <span id="fileName">Choose a PDF file...</span>
+                    <span class="file-btn">Browse</span>
+                </label>
+            </div>
+            <small class="form-text">Maximum file size: 16 MB</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+            <span>🚀 Process Document & Generate Questions</span>
+        </button>
+    </form>
+</div>
+
+<div class="info-section">
+    <h3>📋 How It Works</h3>
+    <div class="steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>Upload Document</h4>
+                <p>Upload your syllabus or lecture notes in PDF format</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>Automatic Processing</h4>
+                <p>System extracts text and generates relevant questions</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>Bloom's Classification</h4>
+                <p>Questions are classified by cognitive level and difficulty</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h4>Generate Paper</h4>
+                <p>Create balanced question papers with custom constraints</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bloom-info">
+    <h3>🎯 Bloom's Taxonomy Levels</h3>
+    <div class="bloom-levels">
+        <div class="bloom-level">
+            <strong>Remember</strong>
+            <p>Recall facts and basic concepts</p>
+        </div>
+        <div class="bloom-level">
+            <strong>Understand</strong>
+            <p>Explain ideas or concepts</p>
+        </div>
+        <div class="bloom-level">
+            <strong>Apply</strong>
+            <p>Use information in new situations</p>
+        </div>
+        <div class="bloom-level">
+            <strong>Analyze</strong>
+            <p>Draw connections among ideas</p>
+        </div>
+        <div class="bloom-level">
+            <strong>Evaluate</strong>
+            <p>Justify a stand or decision</p>
+        </div>
+        <div class="bloom-level">
+            <strong>Create</strong>
+            <p>Produce new or original work</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show selected filename
+document.getElementById('pdf_file').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name || 'Choose a PDF file...';
+    document.getElementById('fileName').textContent = fileName;
+});
+
+// Show loading state on submit
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span>⏳ Processing... Please wait</span>';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}
